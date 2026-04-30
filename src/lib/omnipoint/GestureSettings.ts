@@ -171,17 +171,17 @@ export const GESTURE_LABELS: Record<ConfigurableGesture, string> = {
 export const defaultSettings: GestureSettings = {
   bindings: {
     open_palm: {
-      // Palm facing camera = UNDO (per user spec, both modes)
-      pointerAction: "undo",
-      drawAction: "undo",
+      // Palm facing camera = REDO (inverted per user spec, both modes)
+      pointerAction: "redo",
+      drawAction: "redo",
       holdMs: 180,
       cooldownMs: 500,
       enabled: true,
     },
     palm_back: {
-      // Back of hand = REDO (per user spec, both modes)
-      pointerAction: "redo",
-      drawAction: "redo",
+      // Back of hand = UNDO (inverted per user spec, both modes)
+      pointerAction: "undo",
+      drawAction: "undo",
       holdMs: 180,
       cooldownMs: 500,
       enabled: true,
@@ -280,7 +280,7 @@ export const defaultSettings: GestureSettings = {
   invertScroll: false,
 };
 
-const STORAGE_KEY = "omnipoint.gestureSettings.v2";
+const STORAGE_KEY = "omnipoint.gestureSettings.v3";
 
 function load(): GestureSettings {
   if (typeof localStorage === "undefined") return { ...defaultSettings };

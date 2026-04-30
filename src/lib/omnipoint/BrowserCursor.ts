@@ -62,6 +62,14 @@ export class BrowserCursor {
   // act at the same time with the same set of functions.
   private secondaryCursor: HTMLDivElement | null = null;
   private secondaryLabel: HTMLDivElement | null = null;
+  // Full skeleton overlay for the secondary hand — mirrors the primary
+  // hand visualization so the user sees both hands as live skeletons
+  // instead of one hand + a small accent ring.
+  private hand2: SVGSVGElement | null = null;
+  private hand2Bones: SVGLineElement[] = [];
+  private hand2Joints: SVGCircleElement[] = [];
+  private hand2IndexTip: SVGCircleElement | null = null;
+  private hand2ThumbTip: SVGCircleElement | null = null;
   private isDown2 = false;
   private lastTarget2: Element | null = null;
   private lastClickAt2 = 0;
@@ -267,25 +275,15 @@ export class BrowserCursor {
     this.root.appendChild(this.dot);
     this.root.appendChild(this.label);
 
-    // Secondary-hand cursor — a smaller accent ring + label so the user
-    // can see where their second hand is acting. Hidden by default until
-    // the engine actually reports two hands this frame.
+    // Secondary-hand cursor — kept as an invisible hit-marker only;
+    // the live skeleton (built below) is what the user actually sees.
     this.secondaryCursor = document.createElement("div");
     Object.assign(this.secondaryCursor.style, {
       position: "absolute",
-      width: "34px",
-      height: "34px",
-      marginLeft: "-17px",
-      marginTop: "-17px",
-      borderRadius: "9999px",
-      border: "2px solid hsl(var(--accent, var(--primary)))",
-      boxShadow:
-        "0 0 0 2px hsl(var(--background) / 0.55), 0 0 14px hsl(var(--primary) / 0.45)",
-      transition: "transform 90ms ease-out, opacity 120ms ease-out, background-color 120ms ease-out",
-      transform: "translate3d(0,0,0) scale(1)",
-      backgroundColor: "hsl(var(--primary) / 0.08)",
+      width: "1px",
+      height: "1px",
       opacity: "0",
-      willChange: "transform, opacity",
+      pointerEvents: "none",
     } as CSSStyleDeclaration);
     this.secondaryLabel = document.createElement("div");
     Object.assign(this.secondaryLabel.style, {
@@ -299,7 +297,7 @@ export class BrowserCursor {
       padding: "2px 5px",
       borderRadius: "4px",
       color: "hsl(var(--primary-foreground))",
-      backgroundColor: "hsl(var(--primary) / 0.85)",
+      backgroundColor: "hsl(var(--accent, var(--primary)) / 0.85)",
       whiteSpace: "nowrap",
       textTransform: "uppercase",
       opacity: "0",
@@ -307,6 +305,53 @@ export class BrowserCursor {
     } as CSSStyleDeclaration);
     this.root.appendChild(this.secondaryCursor);
     this.root.appendChild(this.secondaryLabel);
+
+    // Secondary-hand skeleton — same structure as the primary hand SVG
+    // but tinted with the accent color so the two hands are visually
+    // distinct on screen.
+    this.hand2 = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
+    this.hand2.setAttribute("width", "560");
+    this.hand2.setAttribute("height", "560");
+    this.hand2.setAttribute("viewBox", "-280 -280 560 560");
+    Object.assign(this.hand2.style, {
+      position: "absolute",
+      width: "560px",
+      height: "560px",
+      marginLeft: "-280px",
+      marginTop: "-280px",
+      pointerEvents: "none",
+      overflow: "visible",
+      filter: "drop-shadow(0 0 10px hsl(var(--accent, var(--primary)) / 0.55))",
+      transition: "opacity 140ms ease-out",
+      opacity: "0",
+      willChange: "transform, opacity",
+    } as CSSStyleDeclaration);
+    for (let i = 0; i < HAND_CONNECTIONS.length; i++) {
+      const line = document.createElementNS(SVG_NS, "line") as SVGLineElement;
+      line.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+      line.setAttribute("stroke-width", "5");
+      line.setAttribute("stroke-linecap", "round");
+      this.hand2.appendChild(line);
+      this.hand2Bones.push(line);
+    }
+    for (let i = 0; i < 21; i++) {
+      const c = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
+      c.setAttribute("r", "5");
+      c.setAttribute("fill", "hsl(var(--accent, var(--primary)))");
+      this.hand2.appendChild(c);
+      this.hand2Joints.push(c);
+    }
+    this.hand2ThumbTip = this.hand2Joints[4];
+    this.hand2IndexTip = this.hand2Joints[8];
+    this.hand2ThumbTip.setAttribute("r", "8");
+    this.hand2ThumbTip.setAttribute("fill", "white");
+    this.hand2ThumbTip.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+    this.hand2ThumbTip.setAttribute("stroke-width", "3");
+    this.hand2IndexTip.setAttribute("r", "9");
+    this.hand2IndexTip.setAttribute("fill", "white");
+    this.hand2IndexTip.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+    this.hand2IndexTip.setAttribute("stroke-width", "3.5");
+    this.root.appendChild(this.hand2);
 
     this._handConnections = HAND_CONNECTIONS;
   }
@@ -1028,6 +1073,76 @@ export class BrowserCursor {
     this.hand.style.opacity = "1";
   }
 
+  /**
+   * Render the secondary hand's live skeleton, anchored at its cursor
+   * position (index fingertip). Mirrors updateHandSkeleton but uses the
+   * accent-tinted SVG so both hands are visually distinct on screen.
+   */
+  private updateSecondaryHandSkeleton(
+    secondary: { fingersExtended: [boolean, boolean, boolean, boolean, boolean]; pinchDistance: number; landmarks?: { x: number; y: number; z: number }[] },
+    cursorX: number,
+    cursorY: number,
+  ) {
+    const svg = this.hand2;
+    const lm = secondary.landmarks ?? [];
+    if (!svg || lm.length < 21) {
+      if (svg) svg.style.opacity = "0";
+      return;
+    }
+    svg.style.left = `${cursorX}px`;
+    svg.style.top = `${cursorY}px`;
+
+    const refDx = lm[5].x - lm[0].x;
+    const refDy = lm[5].y - lm[0].y;
+    const refLen = Math.hypot(refDx, refDy) || 0.001;
+    const TARGET_PX = 160;
+    const scale = TARGET_PX / refLen;
+    const ax = lm[8].x;
+    const ay = lm[8].y;
+    const pts = lm.map((p) => ({
+      x: (p.x - ax) * scale,
+      y: (p.y - ay) * scale,
+    }));
+
+    for (let i = 0; i < this._handConnections.length; i++) {
+      const [a, b] = this._handConnections[i];
+      const line = this.hand2Bones[i];
+      line.setAttribute("x1", pts[a].x.toFixed(2));
+      line.setAttribute("y1", pts[a].y.toFixed(2));
+      line.setAttribute("x2", pts[b].x.toFixed(2));
+      line.setAttribute("y2", pts[b].y.toFixed(2));
+    }
+    for (let i = 0; i < 21; i++) {
+      const c = this.hand2Joints[i];
+      c.setAttribute("cx", pts[i].x.toFixed(2));
+      c.setAttribute("cy", pts[i].y.toFixed(2));
+    }
+
+    const pinch = secondary.pinchDistance;
+    const closing = pinch > 0 && pinch < 0.85;
+    if (this.hand2IndexTip) {
+      this.hand2IndexTip.setAttribute("r", closing ? "11" : "9");
+      this.hand2IndexTip.setAttribute("fill", closing ? "hsl(var(--accent, var(--primary)))" : "white");
+    }
+    if (this.hand2ThumbTip) {
+      this.hand2ThumbTip.setAttribute("r", closing ? "10" : "8");
+      this.hand2ThumbTip.setAttribute("fill", closing ? "hsl(var(--accent, var(--primary)))" : "white");
+    }
+    const ext = secondary.fingersExtended;
+    const fingerBoneRanges: [number, number, number][] = [
+      [0, 3, 0], [4, 7, 1], [8, 11, 2], [12, 15, 3], [16, 19, 4],
+    ];
+    for (const [s, e, fIdx] of fingerBoneRanges) {
+      const active = ext[fIdx];
+      for (let i = s; i <= e; i++) {
+        this.hand2Bones[i].setAttribute("stroke-opacity", active ? "1" : "0.35");
+      }
+    }
+    this.hand2Bones[20].setAttribute("stroke-opacity", "0.85");
+
+    svg.style.opacity = "1";
+  }
+
   private resetDwell() {
     if (this.dwellTarget || this.dwellAnchor) {
       this.dwellTarget = null;
@@ -1501,6 +1616,7 @@ export class BrowserCursor {
     if (!secondary || this.mode === "off") {
       ring.style.opacity = "0";
       labelEl.style.opacity = "0";
+      if (this.hand2) this.hand2.style.opacity = "0";
       if (this.isDown2 && this.lastTarget2) {
         this.dispatchUp(this.lastTarget2);
         this.isDown2 = false;
@@ -1514,9 +1630,11 @@ export class BrowserCursor {
     const { x, y } = this.resolveScreenXY(secondary.cursorX, secondary.cursorY);
     ring.style.left = `${x}px`;
     ring.style.top = `${y}px`;
-    ring.style.opacity = "1";
     labelEl.style.left = `${x}px`;
     labelEl.style.top = `${y}px`;
+
+    // Render the live skeleton for the secondary hand at its index-tip.
+    this.updateSecondaryHandSkeleton(secondary, x, y);
 
     const g2 = secondary.gesture;
 

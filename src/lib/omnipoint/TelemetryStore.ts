@@ -74,6 +74,8 @@ export interface HandLiveFrame {
   fingersExtended: FingerStates;
   pinchDistance: number;
   isPrimary: boolean;
+  /** Mirrored, normalized 21-point hand skeleton for this hand. */
+  landmarks: HandLandmarks;
 }
 
 export interface TelemetrySnapshot {
