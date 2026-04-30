@@ -110,6 +110,17 @@ export class BrowserCursor {
   private poseHeldLastSeen = 0;
   private poseFiredAt: Partial<Record<ConfigurableGesture, number>> = {};
 
+  // Hover-dwell click: hold the index finger steady on a target for
+  // ~2 seconds and we fire a click. Tracks the current dwell target,
+  // when dwell started, the anchor screen position (so small jitter
+  // doesn't reset), and the last fire time (cooldown).
+  private dwellTarget: Element | null = null;
+  private dwellStartedAt = 0;
+  private dwellAnchor: { x: number; y: number } | null = null;
+  private dwellLastFireAt = 0;
+  private readonly dwellMs = 2000;
+  private readonly dwellMaxJitterPx = 38;
+
   // Pull cursor from the active SensorPanel video rect so XY maps to the
   // visible camera frame the user sees. Falls back to viewport.
   private targetSelector = "#omnipoint-video";
@@ -1017,6 +1028,51 @@ export class BrowserCursor {
     this.hand.style.opacity = "1";
   }
 
+  private resetDwell() {
+    if (this.dwellTarget || this.dwellAnchor) {
+      this.dwellTarget = null;
+      this.dwellAnchor = null;
+      this.dwellStartedAt = 0;
+    }
+  }
+
+  private updateDwell(target: Element | null, x: number, y: number, now: number) {
+    if (!target || target === document.body || target === document.documentElement) {
+      this.resetDwell();
+      this.setLabel("");
+      return;
+    }
+    // Cooldown so we don't keep refiring while the user lingers.
+    if (now - this.dwellLastFireAt < 700) {
+      this.setLabel("");
+      return;
+    }
+    const sameTarget = this.dwellTarget === target;
+    const jitter = this.dwellAnchor
+      ? Math.hypot(x - this.dwellAnchor.x, y - this.dwellAnchor.y)
+      : 0;
+    if (!sameTarget || jitter > this.dwellMaxJitterPx) {
+      this.dwellTarget = target;
+      this.dwellAnchor = { x, y };
+      this.dwellStartedAt = now;
+      this.setLabel("HOVER");
+      return;
+    }
+    const elapsed = now - this.dwellStartedAt;
+    const pct = Math.min(100, Math.round((elapsed / this.dwellMs) * 100));
+    if (elapsed >= this.dwellMs) {
+      this.dispatchDown(target, x, y);
+      this.dispatchUp(target);
+      this.dispatchClick(target, x, y);
+      this.lastClickAt = now;
+      this.dwellLastFireAt = now;
+      this.resetDwell();
+      this.setLabel("CLICK");
+    } else {
+      this.setLabel(`HOLD ${pct}%`);
+    }
+  }
+
   private loop = () => {
     this.rafId = requestAnimationFrame(this.loop);
     if (this.mode === "off") return;
@@ -1406,9 +1462,13 @@ export class BrowserCursor {
       this.lastScrollAt = now;
       this.setLabel(g === "scroll_up" ? "SCROLL ↑" : "SCROLL ↓");
     } else if (g === "point") {
-      this.setLabel("");
+      this.updateDwell(target, x, y, now);
     } else if (g === "none") {
       this.setLabel("");
+      this.resetDwell();
+    } else {
+      // Any non-point gesture (click/drag/scroll/fist/etc) cancels dwell.
+      this.resetDwell();
     }
 
     // Configurable static-pose gestures (open_palm / thumbs_up / pinky_only
