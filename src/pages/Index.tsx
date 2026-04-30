@@ -6,6 +6,7 @@ import {
   Terminal, Apple, ExternalLink, Server, ShieldCheck,
 } from "lucide-react";
 import { ThemeSettings, ThemeToggleQuick } from "@/components/ThemeSettings";
+import { GestureSettingsPanel } from "@/components/omnipoint/GestureSettingsPanel";
 
 const Index = () => {
   useEffect(() => {
@@ -46,6 +47,7 @@ const Index = () => {
       <Quickstart />
       <CTA />
       <Footer />
+      <GestureSettingsPanel />
     </main>
   );
 };

@@ -106,10 +106,15 @@ export function GestureSettingsPanel() {
 
   return (
     <>
+      {/* Floating launcher — fixed to the viewport so it can never be
+          covered by sticky headers, toolbars, or other overlay panels.
+          Uses the same max z-index family as the panel itself. */}
       <button
         onClick={() => setOpen(true)}
         title="Customize gestures"
-        className="font-mono text-[10px] tracking-[0.3em] px-3 h-8 inline-flex items-center gap-1.5 border hairline text-muted-foreground hover:text-foreground bg-card/60 backdrop-blur"
+        aria-label="Open gesture customization"
+        style={{ zIndex: 2147483646 }}
+        className="fixed bottom-5 right-5 font-mono text-[10px] tracking-[0.3em] px-3 h-10 inline-flex items-center gap-1.5 rounded-full border border-primary/60 text-primary bg-card/90 backdrop-blur shadow-lg hover:bg-primary/10"
       >
         <Settings2 className="w-3.5 h-3.5" />
         GESTURES
