@@ -10,6 +10,7 @@ import Index from "./pages/Index.tsx";
 import Demo from "./pages/Demo.tsx";
 import GestureGuide from "./pages/GestureGuide.tsx";
 import Install from "./pages/Install.tsx";
+import Docs from "./pages/Docs.tsx";
 import BridgeInstall from "./pages/BridgeInstall.tsx";
 import BridgeGuideOS from "./pages/BridgeGuideOS.tsx";
 import Auth from "./pages/Auth.tsx";
@@ -31,6 +32,7 @@ const AppRoutes = () => {
       <Route path="/guide" element={<GestureGuide />} />
       <Route path="/demo" element={<Demo />} />
       <Route path="/install" element={<Install />} />
+      <Route path="/docs" element={<Docs />} />
       <Route path="/bridge" element={<BridgeInstall />} />
       <Route path="/bridge/:os" element={<BridgeGuideOS />} />
       <Route
