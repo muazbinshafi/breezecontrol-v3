@@ -1417,9 +1417,13 @@ export class BrowserCursor {
       this.lastScrollAt = now;
       this.setLabel(g === "scroll_up" ? "SCROLL ↑" : "SCROLL ↓");
     } else if (g === "point") {
-      this.setLabel("");
+      this.updateDwell(target, x, y, now);
     } else if (g === "none") {
       this.setLabel("");
+      this.resetDwell();
+    } else {
+      // Any non-point gesture (click/drag/scroll/fist/etc) cancels dwell.
+      this.resetDwell();
     }
 
     // Configurable static-pose gestures (open_palm / thumbs_up / pinky_only
