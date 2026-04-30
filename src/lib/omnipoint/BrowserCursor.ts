@@ -62,6 +62,14 @@ export class BrowserCursor {
   // act at the same time with the same set of functions.
   private secondaryCursor: HTMLDivElement | null = null;
   private secondaryLabel: HTMLDivElement | null = null;
+  // Full skeleton overlay for the secondary hand — mirrors the primary
+  // hand visualization so the user sees both hands as live skeletons
+  // instead of one hand + a small accent ring.
+  private hand2: SVGSVGElement | null = null;
+  private hand2Bones: SVGLineElement[] = [];
+  private hand2Joints: SVGCircleElement[] = [];
+  private hand2IndexTip: SVGCircleElement | null = null;
+  private hand2ThumbTip: SVGCircleElement | null = null;
   private isDown2 = false;
   private lastTarget2: Element | null = null;
   private lastClickAt2 = 0;
