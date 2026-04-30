@@ -1028,6 +1028,51 @@ export class BrowserCursor {
     this.hand.style.opacity = "1";
   }
 
+  private resetDwell() {
+    if (this.dwellTarget || this.dwellAnchor) {
+      this.dwellTarget = null;
+      this.dwellAnchor = null;
+      this.dwellStartedAt = 0;
+    }
+  }
+
+  private updateDwell(target: Element | null, x: number, y: number, now: number) {
+    if (!target || target === document.body || target === document.documentElement) {
+      this.resetDwell();
+      this.setLabel("");
+      return;
+    }
+    // Cooldown so we don't keep refiring while the user lingers.
+    if (now - this.dwellLastFireAt < 700) {
+      this.setLabel("");
+      return;
+    }
+    const sameTarget = this.dwellTarget === target;
+    const jitter = this.dwellAnchor
+      ? Math.hypot(x - this.dwellAnchor.x, y - this.dwellAnchor.y)
+      : 0;
+    if (!sameTarget || jitter > this.dwellMaxJitterPx) {
+      this.dwellTarget = target;
+      this.dwellAnchor = { x, y };
+      this.dwellStartedAt = now;
+      this.setLabel("HOVER");
+      return;
+    }
+    const elapsed = now - this.dwellStartedAt;
+    const pct = Math.min(100, Math.round((elapsed / this.dwellMs) * 100));
+    if (elapsed >= this.dwellMs) {
+      this.dispatchDown(target, x, y);
+      this.dispatchUp(target);
+      this.dispatchClick(target, x, y);
+      this.lastClickAt = now;
+      this.dwellLastFireAt = now;
+      this.resetDwell();
+      this.setLabel("CLICK");
+    } else {
+      this.setLabel(`HOLD ${pct}%`);
+    }
+  }
+
   private loop = () => {
     this.rafId = requestAnimationFrame(this.loop);
     if (this.mode === "off") return;
