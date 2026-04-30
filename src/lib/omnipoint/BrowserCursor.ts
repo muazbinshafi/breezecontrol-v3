@@ -110,6 +110,17 @@ export class BrowserCursor {
   private poseHeldLastSeen = 0;
   private poseFiredAt: Partial<Record<ConfigurableGesture, number>> = {};
 
+  // Hover-dwell click: hold the index finger steady on a target for
+  // ~2 seconds and we fire a click. Tracks the current dwell target,
+  // when dwell started, the anchor screen position (so small jitter
+  // doesn't reset), and the last fire time (cooldown).
+  private dwellTarget: Element | null = null;
+  private dwellStartedAt = 0;
+  private dwellAnchor: { x: number; y: number } | null = null;
+  private dwellLastFireAt = 0;
+  private readonly dwellMs = 2000;
+  private readonly dwellMaxJitterPx = 38;
+
   // Pull cursor from the active SensorPanel video rect so XY maps to the
   // visible camera frame the user sees. Falls back to viewport.
   private targetSelector = "#omnipoint-video";
