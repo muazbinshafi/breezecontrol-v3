@@ -119,7 +119,10 @@ export function GestureSettingsPanel() {
         <aside
           // Docked side panel — sits NEXT TO the page instead of overlaying
           // it. No backdrop, no blur, page stays interactive underneath.
-          className="fixed top-14 right-0 bottom-0 w-[420px] max-w-[92vw] z-[60] bg-card border-l border-border shadow-2xl overflow-y-auto"
+          // z-index must exceed the BrowserCursor overlay (2147483646) so
+          // the customization panel sits visibly in front of the page.
+          style={{ zIndex: 2147483647 }}
+          className="fixed top-14 right-0 bottom-0 w-[420px] max-w-[92vw] bg-card border-l border-border shadow-2xl overflow-y-auto"
         >
           <div>
             <header className="sticky top-0 z-10 bg-card border-b hairline px-4 h-12 flex items-center justify-between">
