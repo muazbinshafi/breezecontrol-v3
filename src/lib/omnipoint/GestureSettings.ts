@@ -280,7 +280,7 @@ export const defaultSettings: GestureSettings = {
   invertScroll: false,
 };
 
-const STORAGE_KEY = "omnipoint.gestureSettings.v2";
+const STORAGE_KEY = "omnipoint.gestureSettings.v3";
 
 function load(): GestureSettings {
   if (typeof localStorage === "undefined") return { ...defaultSettings };
