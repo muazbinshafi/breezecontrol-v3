@@ -1,26 +1,26 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 
 export const Route = createFileRoute("/")({
-  component: Index,
+  component: AppHost,
+  ssr: false,
 });
 
-// IMPORTANT: Replace this placeholder. For sites with multiple pages (About, Services, Contact, etc.),
-// create separate route files (about.tsx, services.tsx, contact.tsx) — don't put all pages in this file.
-function PlaceholderIndex() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
+export const Route_ = Route; // type helper
 
-function Index() {
-  return <PlaceholderIndex />;
+function AppHost() {
+  const [App, setApp] = useState<React.ComponentType | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    import("@/App").then((mod) => {
+      if (!cancelled) setApp(() => mod.default);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  if (!App) return null;
+  return <App />;
 }
