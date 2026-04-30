@@ -1546,6 +1546,7 @@ export class BrowserCursor {
     if (!secondary || this.mode === "off") {
       ring.style.opacity = "0";
       labelEl.style.opacity = "0";
+      if (this.hand2) this.hand2.style.opacity = "0";
       if (this.isDown2 && this.lastTarget2) {
         this.dispatchUp(this.lastTarget2);
         this.isDown2 = false;
@@ -1559,9 +1560,11 @@ export class BrowserCursor {
     const { x, y } = this.resolveScreenXY(secondary.cursorX, secondary.cursorY);
     ring.style.left = `${x}px`;
     ring.style.top = `${y}px`;
-    ring.style.opacity = "1";
     labelEl.style.left = `${x}px`;
     labelEl.style.top = `${y}px`;
+
+    // Render the live skeleton for the secondary hand at its index-tip.
+    this.updateSecondaryHandSkeleton(secondary, x, y);
 
     const g2 = secondary.gesture;
 
