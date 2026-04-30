@@ -70,7 +70,7 @@ function Header() {
           <Link to="/guide" className="hover:text-foreground transition-colors">Guide</Link>
           <a href="#bridge" className="hover:text-foreground transition-colors">Bridge</a>
           <a href="#architecture" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#quickstart" className="hover:text-foreground transition-colors">Docs</a>
+          <Link to="/docs" className="hover:text-foreground transition-colors">Docs</Link>
         </nav>
         <div className="flex items-center gap-2">
           <a
