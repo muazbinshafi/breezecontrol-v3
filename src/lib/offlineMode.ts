@@ -4,7 +4,7 @@
 // user just wants to tune gestures without signing in.
 
 import { useSyncExternalStore } from "react";
-import { isSupabaseConfigured } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/configured";
 
 const STORAGE_KEY = "omnipoint.offlineMode";
 

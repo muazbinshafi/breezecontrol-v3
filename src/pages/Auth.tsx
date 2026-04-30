@@ -4,7 +4,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Hand, Loader2, ArrowRight, Mail, Lock, User as UserIcon, WifiOff } from "lucide-react";
-import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { isSupabaseConfigured } from "@/integrations/supabase/configured";
 import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useOfflineMode, OfflineModeStore } from "@/lib/offlineMode";
