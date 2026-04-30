@@ -306,6 +306,7 @@ export class GestureEngine {
       fingersExtended: f.fingersExtended,
       pinchDistance: f.pinch,
       isPrimary: f.side === primary.side,
+      landmarks: f.landmarks,
     }));
     TelemetryStore.set({
       cursorX: primary.state.cursor.x,
