@@ -275,25 +275,15 @@ export class BrowserCursor {
     this.root.appendChild(this.dot);
     this.root.appendChild(this.label);
 
-    // Secondary-hand cursor — a smaller accent ring + label so the user
-    // can see where their second hand is acting. Hidden by default until
-    // the engine actually reports two hands this frame.
+    // Secondary-hand cursor — kept as an invisible hit-marker only;
+    // the live skeleton (built below) is what the user actually sees.
     this.secondaryCursor = document.createElement("div");
     Object.assign(this.secondaryCursor.style, {
       position: "absolute",
-      width: "34px",
-      height: "34px",
-      marginLeft: "-17px",
-      marginTop: "-17px",
-      borderRadius: "9999px",
-      border: "2px solid hsl(var(--accent, var(--primary)))",
-      boxShadow:
-        "0 0 0 2px hsl(var(--background) / 0.55), 0 0 14px hsl(var(--primary) / 0.45)",
-      transition: "transform 90ms ease-out, opacity 120ms ease-out, background-color 120ms ease-out",
-      transform: "translate3d(0,0,0) scale(1)",
-      backgroundColor: "hsl(var(--primary) / 0.08)",
+      width: "1px",
+      height: "1px",
       opacity: "0",
-      willChange: "transform, opacity",
+      pointerEvents: "none",
     } as CSSStyleDeclaration);
     this.secondaryLabel = document.createElement("div");
     Object.assign(this.secondaryLabel.style, {
@@ -307,7 +297,7 @@ export class BrowserCursor {
       padding: "2px 5px",
       borderRadius: "4px",
       color: "hsl(var(--primary-foreground))",
-      backgroundColor: "hsl(var(--primary) / 0.85)",
+      backgroundColor: "hsl(var(--accent, var(--primary)) / 0.85)",
       whiteSpace: "nowrap",
       textTransform: "uppercase",
       opacity: "0",
@@ -315,6 +305,53 @@ export class BrowserCursor {
     } as CSSStyleDeclaration);
     this.root.appendChild(this.secondaryCursor);
     this.root.appendChild(this.secondaryLabel);
+
+    // Secondary-hand skeleton — same structure as the primary hand SVG
+    // but tinted with the accent color so the two hands are visually
+    // distinct on screen.
+    this.hand2 = document.createElementNS(SVG_NS, "svg") as SVGSVGElement;
+    this.hand2.setAttribute("width", "560");
+    this.hand2.setAttribute("height", "560");
+    this.hand2.setAttribute("viewBox", "-280 -280 560 560");
+    Object.assign(this.hand2.style, {
+      position: "absolute",
+      width: "560px",
+      height: "560px",
+      marginLeft: "-280px",
+      marginTop: "-280px",
+      pointerEvents: "none",
+      overflow: "visible",
+      filter: "drop-shadow(0 0 10px hsl(var(--accent, var(--primary)) / 0.55))",
+      transition: "opacity 140ms ease-out",
+      opacity: "0",
+      willChange: "transform, opacity",
+    } as CSSStyleDeclaration);
+    for (let i = 0; i < HAND_CONNECTIONS.length; i++) {
+      const line = document.createElementNS(SVG_NS, "line") as SVGLineElement;
+      line.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+      line.setAttribute("stroke-width", "5");
+      line.setAttribute("stroke-linecap", "round");
+      this.hand2.appendChild(line);
+      this.hand2Bones.push(line);
+    }
+    for (let i = 0; i < 21; i++) {
+      const c = document.createElementNS(SVG_NS, "circle") as SVGCircleElement;
+      c.setAttribute("r", "5");
+      c.setAttribute("fill", "hsl(var(--accent, var(--primary)))");
+      this.hand2.appendChild(c);
+      this.hand2Joints.push(c);
+    }
+    this.hand2ThumbTip = this.hand2Joints[4];
+    this.hand2IndexTip = this.hand2Joints[8];
+    this.hand2ThumbTip.setAttribute("r", "8");
+    this.hand2ThumbTip.setAttribute("fill", "white");
+    this.hand2ThumbTip.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+    this.hand2ThumbTip.setAttribute("stroke-width", "3");
+    this.hand2IndexTip.setAttribute("r", "9");
+    this.hand2IndexTip.setAttribute("fill", "white");
+    this.hand2IndexTip.setAttribute("stroke", "hsl(var(--accent, var(--primary)))");
+    this.hand2IndexTip.setAttribute("stroke-width", "3.5");
+    this.root.appendChild(this.hand2);
 
     this._handConnections = HAND_CONNECTIONS;
   }
