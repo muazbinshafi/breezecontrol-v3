@@ -1,4 +1,4 @@
-import { createRouter, useRouter, createMemoryHistory } from "@tanstack/react-router";
+import { createRouter, useRouter } from "@tanstack/react-router";
 import { routeTree } from "./routeTree.gen";
 
 function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
@@ -55,21 +55,12 @@ function DefaultErrorComponent({ error, reset }: { error: Error; reset: () => vo
 }
 
 export const getRouter = () => {
-  // Use a memory history so TanStack Router does NOT touch window.location.
-  // The real client routing is handled by react-router-dom's BrowserRouter
-  // mounted inside <App />. TanStack only renders the SSR shell + the splat
-  // mount point. Two routers writing to the same history caused render-time
-  // setState loops; this isolates them cleanly.
   const router = createRouter({
     routeTree,
     context: {},
     scrollRestoration: false,
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: DefaultErrorComponent,
-    history:
-      typeof window === "undefined"
-        ? undefined
-        : createMemoryHistory({ initialEntries: ["/"] }),
   });
 
   return router;
