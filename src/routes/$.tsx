@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-export const Route = createFileRoute("/")({
+// Catch-all route: renders the same App which uses BrowserRouter internally
+// to handle all client-side routing word-for-word from the original project.
+export const Route = createFileRoute("/$")({
   component: AppHost,
   ssr: false,
 });
-
-export const Route_ = Route; // type helper
 
 function AppHost() {
   const [App, setApp] = useState<React.ComponentType | null>(null);
