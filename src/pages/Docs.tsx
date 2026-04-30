@@ -788,10 +788,21 @@ const Docs = () => {
       }
 
       // ============== SECTIONS ==============
-      for (const s of SECTIONS) {
-        doc.addPage();
-        drawPageChrome();
-        y = margin + 30;
+      // Start sections on a fresh page, then let them flow continuously.
+      doc.addPage();
+      drawPageChrome();
+      y = margin + 30;
+
+      for (let si = 0; si < SECTIONS.length; si++) {
+        const s = SECTIONS[si];
+
+        // Add a small gap (~2-3 lines) between sections instead of a new page.
+        if (si > 0) {
+          y += 28; // ~2 line breathing room after previous topic ends
+        }
+
+        // If the section header wouldn't fit on the current page, start a new one.
+        ensureSpace(80);
 
         // Section title bar
         doc.setFillColor(...BRAND);
