@@ -174,16 +174,16 @@ export const defaultSettings: GestureSettings = {
       // Palm facing camera = UNDO (per user spec, both modes)
       pointerAction: "undo",
       drawAction: "undo",
-      holdMs: 220,
-      cooldownMs: 600,
+      holdMs: 180,
+      cooldownMs: 500,
       enabled: true,
     },
     palm_back: {
       // Back of hand = REDO (per user spec, both modes)
       pointerAction: "redo",
       drawAction: "redo",
-      holdMs: 220,
-      cooldownMs: 600,
+      holdMs: 180,
+      cooldownMs: 500,
       enabled: true,
     },
     thumbs_up: {
