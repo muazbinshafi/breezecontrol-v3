@@ -46,6 +46,14 @@ export const Route = createRootRoute({
         content:
           "Control any website with a wave of your hand. Pinch, point and gesture in front of your camera — no install required.",
       },
+      { title: "Lovable App" },
+      { property: "og:title", content: "Lovable App" },
+      { name: "twitter:title", content: "Lovable App" },
+      { name: "description", content: "Live Word Deploy: Installs dependencies and deploys content word by word in real-time." },
+      { property: "og:description", content: "Live Word Deploy: Installs dependencies and deploys content word by word in real-time." },
+      { name: "twitter:description", content: "Live Word Deploy: Installs dependencies and deploys content word by word in real-time." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/036558f9-d137-4987-9412-cb4ed8836ad2/id-preview-5ade9692--c485883a-4871-4fc3-bb12-8cb95aa9ed9b.lovable.app-1777532530438.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/036558f9-d137-4987-9412-cb4ed8836ad2/id-preview-5ade9692--c485883a-4871-4fc3-bb12-8cb95aa9ed9b.lovable.app-1777532530438.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
