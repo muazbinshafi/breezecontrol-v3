@@ -118,7 +118,7 @@ export class BrowserCursor {
   private dwellStartedAt = 0;
   private dwellAnchor: { x: number; y: number } | null = null;
   private dwellLastFireAt = 0;
-  private readonly dwellMs = 2000;
+  private readonly dwellMs = 1500;
   private readonly dwellMaxJitterPx = 38;
 
   // Pull cursor from the active SensorPanel video rect so XY maps to the
@@ -1042,20 +1042,26 @@ export class BrowserCursor {
       this.setLabel("");
       return;
     }
-    // Cooldown so we don't keep refiring while the user lingers.
-    if (now - this.dwellLastFireAt < 700) {
-      this.setLabel("");
-      return;
-    }
+    // Short cooldown so a single dwell fires once, then we immediately
+    // re-arm on the same target for repeated clicks.
+    const inCooldown = now - this.dwellLastFireAt < 450;
     const sameTarget = this.dwellTarget === target;
     const jitter = this.dwellAnchor
       ? Math.hypot(x - this.dwellAnchor.x, y - this.dwellAnchor.y)
       : 0;
     if (!sameTarget || jitter > this.dwellMaxJitterPx) {
+      // Re-arm dwell on a (possibly same) target after a click.
       this.dwellTarget = target;
       this.dwellAnchor = { x, y };
       this.dwellStartedAt = now;
-      this.setLabel("HOVER");
+      this.setLabel(inCooldown ? "" : "HOVER");
+      return;
+    }
+    if (inCooldown) {
+      // Keep the anchor but defer the timer start until cooldown ends,
+      // so repeated clicks need a fresh full hold each time.
+      this.dwellStartedAt = now;
+      this.setLabel("");
       return;
     }
     const elapsed = now - this.dwellStartedAt;
