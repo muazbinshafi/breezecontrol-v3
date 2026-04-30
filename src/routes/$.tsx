@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
-// Catch-all route: renders the same App which uses BrowserRouter internally
-// to handle all client-side routing word-for-word from the original project.
+// Catch-all (splat) — matches any URL path. Mounts <App /> which uses
+// react-router-dom's BrowserRouter to do the real client-side routing.
 export const Route = createFileRoute("/$")({
   component: AppHost,
   ssr: false,
