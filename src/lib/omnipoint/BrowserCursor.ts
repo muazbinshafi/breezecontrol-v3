@@ -1073,6 +1073,76 @@ export class BrowserCursor {
     this.hand.style.opacity = "1";
   }
 
+  /**
+   * Render the secondary hand's live skeleton, anchored at its cursor
+   * position (index fingertip). Mirrors updateHandSkeleton but uses the
+   * accent-tinted SVG so both hands are visually distinct on screen.
+   */
+  private updateSecondaryHandSkeleton(
+    secondary: { fingersExtended: [boolean, boolean, boolean, boolean, boolean]; pinchDistance: number; landmarks?: { x: number; y: number; z: number }[] },
+    cursorX: number,
+    cursorY: number,
+  ) {
+    const svg = this.hand2;
+    const lm = secondary.landmarks ?? [];
+    if (!svg || lm.length < 21) {
+      if (svg) svg.style.opacity = "0";
+      return;
+    }
+    svg.style.left = `${cursorX}px`;
+    svg.style.top = `${cursorY}px`;
+
+    const refDx = lm[5].x - lm[0].x;
+    const refDy = lm[5].y - lm[0].y;
+    const refLen = Math.hypot(refDx, refDy) || 0.001;
+    const TARGET_PX = 160;
+    const scale = TARGET_PX / refLen;
+    const ax = lm[8].x;
+    const ay = lm[8].y;
+    const pts = lm.map((p) => ({
+      x: (p.x - ax) * scale,
+      y: (p.y - ay) * scale,
+    }));
+
+    for (let i = 0; i < this._handConnections.length; i++) {
+      const [a, b] = this._handConnections[i];
+      const line = this.hand2Bones[i];
+      line.setAttribute("x1", pts[a].x.toFixed(2));
+      line.setAttribute("y1", pts[a].y.toFixed(2));
+      line.setAttribute("x2", pts[b].x.toFixed(2));
+      line.setAttribute("y2", pts[b].y.toFixed(2));
+    }
+    for (let i = 0; i < 21; i++) {
+      const c = this.hand2Joints[i];
+      c.setAttribute("cx", pts[i].x.toFixed(2));
+      c.setAttribute("cy", pts[i].y.toFixed(2));
+    }
+
+    const pinch = secondary.pinchDistance;
+    const closing = pinch > 0 && pinch < 0.85;
+    if (this.hand2IndexTip) {
+      this.hand2IndexTip.setAttribute("r", closing ? "11" : "9");
+      this.hand2IndexTip.setAttribute("fill", closing ? "hsl(var(--accent, var(--primary)))" : "white");
+    }
+    if (this.hand2ThumbTip) {
+      this.hand2ThumbTip.setAttribute("r", closing ? "10" : "8");
+      this.hand2ThumbTip.setAttribute("fill", closing ? "hsl(var(--accent, var(--primary)))" : "white");
+    }
+    const ext = secondary.fingersExtended;
+    const fingerBoneRanges: [number, number, number][] = [
+      [0, 3, 0], [4, 7, 1], [8, 11, 2], [12, 15, 3], [16, 19, 4],
+    ];
+    for (const [s, e, fIdx] of fingerBoneRanges) {
+      const active = ext[fIdx];
+      for (let i = s; i <= e; i++) {
+        this.hand2Bones[i].setAttribute("stroke-opacity", active ? "1" : "0.35");
+      }
+    }
+    this.hand2Bones[20].setAttribute("stroke-opacity", "0.85");
+
+    svg.style.opacity = "1";
+  }
+
   private resetDwell() {
     if (this.dwellTarget || this.dwellAnchor) {
       this.dwellTarget = null;
